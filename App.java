@@ -6,6 +6,37 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.*;
+
+class undoStack {
+    Deque<String> undoDeque = new ArrayDeque<>();
+    Deque<String> redoDeque = new ArrayDeque<>();
+
+    String returnTop() {
+        return undoDeque.peek();
+    }
+
+    void add(String currentText) {
+        redoDeque.clear();
+        if (undoDeque.size() > 10) {
+            undoDeque.removeFirst();
+        }
+        undoDeque.add(currentText);
+    }
+
+    String undo() {
+        redoDeque.add(undoDeque.pop());
+        return undoDeque.peek();
+    }
+
+    String redo() {
+        if (!redoDeque.isEmpty()) {
+            return redoDeque.peek();
+        }
+        return undoDeque.peek();
+    }
+
+}
 
 public class App implements ActionListener, KeyListener {
     JMenu File, Edit, View, View_subMenu;
@@ -15,8 +46,12 @@ public class App implements ActionListener, KeyListener {
     JTextArea area;
     JLabel wordCount, characterCount;
     JFrame f;
+    int count = 0, currCount;
+    undoStack undoRedo;
 
     App () {
+        undoRedo = new undoStack();
+
         f = new JFrame("Notepad");
 
         JMenuBar mb = new JMenuBar();
@@ -42,6 +77,8 @@ public class App implements ActionListener, KeyListener {
         i2_3 = new JMenuItem("Copy");
         i2_4 = new JMenuItem("Paste");
         i2_5 = new JMenuItem("Delete");
+
+        i2_1.addActionListener(this);
 
         Edit.add(i2_1);
         Edit.add(i2_2);
@@ -93,12 +130,20 @@ public class App implements ActionListener, KeyListener {
             newFile();
         }else if (e.getSource() == i1_3) {
             saveFile();
-        } 
+        }else if (e.getSource() == i2_1) {
+            undoAction();
+        }
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
         updateCounts();
+        if (currCount - count >= 10) {
+            count = currCount;
+            undoRedo.add(area.getText());
+            System.out.println(undoRedo.returnTop());
+        }
+
     }
 
     @Override
@@ -115,7 +160,8 @@ public class App implements ActionListener, KeyListener {
         String text = area.getText();
         String words[] = text.split("\\s");        
         wordCount.setText("Words :" + words.length);
-        characterCount.setText("Characters: "+ text.length());
+        currCount = text.length();
+        characterCount.setText("Characters: "+ currCount);
     }
 
     private void openFile() {
@@ -173,6 +219,10 @@ public class App implements ActionListener, KeyListener {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void undoAction() {
+        area.setText(undoRedo.undo());
     }
     public static void main(String[] args) throws Exception {
         new App();
