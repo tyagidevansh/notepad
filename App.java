@@ -8,7 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-class undoStack {
+class undoStack{
     Deque<String> undoDeque = new ArrayDeque<>();
     Deque<String> redoDeque = new ArrayDeque<>();
 
@@ -17,21 +17,33 @@ class undoStack {
     }
 
     void add(String currentText) {
-        redoDeque.clear();
+        //redoDeque.clear();
         if (undoDeque.size() > 10) {
             undoDeque.removeFirst();
         }
-        undoDeque.add(currentText);
+        undoDeque.push(currentText);
+        redoDeque.push(currentText);
+        //System.out.println("top of stack: " + undoDeque.peek());
     }
 
-    String undo() {
-        redoDeque.add(undoDeque.pop());
-        return undoDeque.peek();
+    String undo(String currText) {
+        if (!undoDeque.isEmpty()) {
+            String res = undoDeque.pop();
+            redoDeque.push(currText);
+            return res;
+        } else {
+            System.out.println("stack empty");
+            return "";
+        }
+        
     }
 
     String redo() {
         if (!redoDeque.isEmpty()) {
-            return redoDeque.peek();
+            String res = redoDeque.pop();
+            return res;
+        } else {
+            System.out.println("redo empty");
         }
         return undoDeque.peek();
     }
@@ -48,6 +60,10 @@ public class App implements ActionListener, KeyListener {
     JFrame f;
     int count = 0, currCount;
     undoStack undoRedo;
+
+    boolean ctrlPressed = false;
+    boolean zPressed = false;
+    boolean yPressed = false;
 
     App () {
         undoRedo = new undoStack();
@@ -137,24 +153,55 @@ public class App implements ActionListener, KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
+        if (currCount == 0) {
+            count = 0;
+        }
         updateCounts();
         if (currCount - count >= 10) {
             count = currCount;
             undoRedo.add(area.getText());
-            System.out.println(undoRedo.returnTop());
+            //System.out.println(undoRedo.returnTop());
         }
 
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-
+        int keyCode  = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_CONTROL) {
+            ctrlPressed = true;
+        } else if (keyCode == KeyEvent.VK_Z) {
+            zPressed = true;
+        } else if (keyCode == KeyEvent.VK_Y) {
+            yPressed = true;
+        }
+        shortcut();
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-
+        int keyCode  = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_CONTROL) {
+            ctrlPressed = false;
+        } else if (keyCode == KeyEvent.VK_Z) {
+            zPressed = false;
+        } else if (keyCode == KeyEvent.VK_Y) {
+            yPressed = false;
+        }
+        shortcut();
     }
+
+    private void shortcut() {
+        if (ctrlPressed && zPressed && yPressed) {
+            //do nothing
+        } else if (ctrlPressed && zPressed) {
+            undoAction();
+        } else if (ctrlPressed && yPressed) {
+            redoAction();
+        }
+    }
+
+
 
     private void updateCounts() {
         String text = area.getText();
@@ -184,7 +231,7 @@ public class App implements ActionListener, KeyListener {
             "Do you want to save this file before exiting?",
             "Confirm save",
             JOptionPane.YES_NO_CANCEL_OPTION,
-            JOptionPane.WARNING_MESSAGE);
+            JOptionPane.WARNING_MESSAGE);    
         
         if (response == JOptionPane.YES_OPTION) {
             saveFile();
@@ -222,7 +269,11 @@ public class App implements ActionListener, KeyListener {
     }
 
     private void undoAction() {
-        area.setText(undoRedo.undo());
+        area.setText(undoRedo.undo(area.getText()));
+    }
+
+    private void redoAction() {
+        area.setText(undoRedo.redo());
     }
     public static void main(String[] args) throws Exception {
         new App();
