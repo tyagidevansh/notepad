@@ -55,13 +55,12 @@ public class App implements ActionListener, KeyListener {
     private JLabel characterCountLabel;
     private int count = 0, currCount;
     private boolean ctrlPressed = false, zPressed = false, yPressed = false;
-    private boolean saved = false;
+    private boolean darkMode = false;
 
     private App() {
         undoRedo = new UndoStack();
 
-        frame = new JFrame("Notepad");
-        //implement frame.setTitle();
+        frame = new JFrame("Untitled.txt - Notepad");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
@@ -102,6 +101,9 @@ public class App implements ActionListener, KeyListener {
         viewMenu.add(zoomOutItem);
         JMenuItem zoomResetItem = new JMenuItem("Reset Zoom");
         viewMenu.add(zoomResetItem);
+        JMenuItem darkModeItem = new JMenuItem("Toggle dark mode");
+        darkModeItem.addActionListener(this);
+        viewMenu.add(darkModeItem);
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
@@ -130,6 +132,7 @@ public class App implements ActionListener, KeyListener {
         frame.setSize(800, 600);
         frame.setVisible(true);
         textArea.requestFocusInWindow();
+        setLightMode();
     }
 
     public static void main(String[] args) {
@@ -147,6 +150,8 @@ public class App implements ActionListener, KeyListener {
             saveFile();
         } else if (command.equals("Undo")) {
             undoAction();
+        } else if (command.equals("Toggle dark mode")) {
+            toggleDarkMode();
         }
     }
 
@@ -220,6 +225,8 @@ public class App implements ActionListener, KeyListener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            String fileName = selectedFile.getName();
+            setTitle(fileName);
         }
     }
 
@@ -237,6 +244,7 @@ public class App implements ActionListener, KeyListener {
         } else if (response == JOptionPane.CANCEL_OPTION) {
             return;
         }
+        setTitle("Untitled");
     }
 
     private void saveFile() {
@@ -262,6 +270,8 @@ public class App implements ActionListener, KeyListener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            String fileName = selectedFile.getName();
+            setTitle(fileName);
         }
     }
 
@@ -271,5 +281,28 @@ public class App implements ActionListener, KeyListener {
 
     private void redoAction() {
         textArea.setText(undoRedo.redo());
+    }
+
+    private void setTitle(String fileName) {
+        frame.setTitle(fileName + ".txt - Notepad");
+    }
+
+    private void toggleDarkMode() {
+        darkMode = !darkMode;
+        if (darkMode) {
+            setDarkMode();
+        } else {
+            setLightMode();
+        }
+    }
+
+    private void setLightMode() {
+        textArea.setBackground(Color.WHITE);
+        textArea.setForeground(Color.BLACK);
+    }
+
+    private void setDarkMode() {
+        textArea.setBackground(new Color(24, 24, 24));
+        textArea.setForeground(Color.WHITE);
     }
 }
